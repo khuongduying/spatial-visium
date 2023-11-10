@@ -111,6 +111,7 @@ ggsave(
 
 
 ### select the cell type that we are interested
+ct.visualize = unique(sc_meta$cellType)
 ct.visualize = ct.visualize[is.na(ct.visualize)==FALSE]
 
 ### visualize the spatial distribution of the cell type proportion
@@ -121,7 +122,8 @@ p2 <- CARD.visualize.prop(
                 colors             = c("lightblue","lightpink","red"), ### if not provide, we will use the default colors
                 NumCols            = 10,                                 ### number of columns in the figure panel
                 pointSize          = 1.0
-                )                             ### point size in ggplot2 scatterplot  
+                )
+                                             ### point size in ggplot2 scatterplot  
 print(p2)
 
 ### save fig
