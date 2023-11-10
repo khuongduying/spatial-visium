@@ -11,13 +11,13 @@ library(Matrix)
 # PATH
 REF_CELLTYPE    <- "/mnt/d4t/SPATIAL/GeneSmart/REF_CELLTYPE/"
 rdata           <- "/mnt/d4t/SPATIAL/GeneSmart/rdata/"
-fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/A1/"
+fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/10X/"
 
 
 # LOAD DATA
 
 ## SPATIAL DATA
-SCE             <- readRDS(file=paste0(rdata," spatialA1_q6_ready.rds")) 
+SCE             <- readRDS(file=paste0(rdata," spatial10X_q15_ready.rds")) 
 
 ## SPATIAL COUNT
 spatial_count   <- logcounts(SCE)
@@ -27,7 +27,7 @@ spatial_location            <- colData(SCE)[c("row","col")]
 ### transformation
 colnames(spatial_location)  <- c("x","y") ## transform to correct format
 spatial_location            <- data.frame(spatial_location)
-spatial_location$x <- rev(spatial_location$x)
+#spatial_location$x <- rev(spatial_location$x)
 
 ## SINGLE-CELL REF COUNT
 ### load data
@@ -96,7 +96,7 @@ p1 <- CARD.visualize.pie(
 	spatial_location    = CARD_obj@spatial_location, 
     colors              = colors, 
     radius              = 0.4 ### You can choose radius = NULL or your own radius number
-    )
+    ) + coord_flip() + scale_x_reverse()
 print(p1)
 
 ### save figure
@@ -111,21 +111,25 @@ ggsave(
 
 
 ### select the cell type that we are interested
+ct.visualize = unique(sc_meta$cellType)
 ct.visualize = ct.visualize[is.na(ct.visualize)==FALSE]
+ct.visualize = c("tS2","tS1","Malignant cells","Myofibroblasts")
 
 ### visualize the spatial distribution of the cell type proportion
 p2 <- CARD.visualize.prop(
                 proportion         = CARD_obj@Proportion_CARD,        
                 spatial_location   = CARD_obj@spatial_location, 
                 ct.visualize       = ct.visualize,                 ### selected cell types to visualize
-                colors             = c("lightblue","lightpink","red"), ### if not provide, we will use the default colors
-                NumCols            = 10,                                 ### number of columns in the figure panel
-                pointSize          = 1.0
-                )                             ### point size in ggplot2 scatterplot  
+                colors             = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
+                NumCols            = 2,                                 ### number of columns in the figure panel
+                pointSize          = 2.0
+                ) +
+                coord_flip() +
+                scale_x_reverse()                             ### point size in ggplot2 scatterplot  
 print(p2)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_celltype_A1.png"), p2, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype_10X.png"), p2, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE PROPORTION FOR TWO CELL TYPES
@@ -134,15 +138,15 @@ ggsave(paste0(fig_path,"CARD_celltype_A1.png"), p2, width=3000, height=3000, uni
 p3 <- CARD.visualize.prop.2CT(
     proportion          = CARD_obj@Proportion_CARD,                             ### Cell type proportion estimated by CARD
     spatial_location    = CARD_obj@spatial_location,                      ### spatial location information
-    ct2.visualize       = c("tS2","tS1"),              ### two cell types you want to visualize
+    ct2.visualize       = c("Malignant cells","tS2"),              ### two cell types you want to visualize
     colors              = list(
                             c("lightblue","lightyellow","red"),
                             c("lightblue","lightyellow","black"))
-    )                                   
+    ) + coord_flip() + scale_x_reverse()  + scale_size_manual(20)                   
 print(p3)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_2celltype_A1.png"), p3, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_2celltype_10X.png"), p3, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE CELL TYPE PROPORTION CORRELATION
@@ -159,7 +163,7 @@ ggsave(paste0(fig_path,"CARD_correlation_A1.png"), p4, width=3000, height=3000, 
 # REFINED SPATIAL MAP
 
 ## IPUTATION ON THE NEWLY GRIDED SPATIAL LOCATIONS
-CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 10,exclude = NULL)
+CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 20,exclude = NULL)
 
 
 ## Visualize the newly grided spatial locations to see if the shape is correctly detected. If not, the user can provide the row names of the excluded spatial location data into the CARD.imputation function
@@ -183,16 +187,23 @@ p5 <- ggplot(
 print(p5)
 
 ## Visualize the cell type proportion at an enhanced resolution
+ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
+
 p6 <- CARD.visualize.prop(
 	proportion          = CARD_obj@refined_prop,                         
 	spatial_location    = location_imputation,            
 	ct.visualize        = ct.visualize,                    
-	colors              = c("lightblue","lightyellow","red"),    
-	NumCols             = 10,
-	pointSize           = 2
-    )                                  
+	colors              = NULL,    
+	NumCols             = 2,
+	pointSize           = 3.0
+    ) +  
+    theme_bw() + 
+    coord_flip() + 
+    scale_x_reverse()
+                                    
 print(p6)
-ggsave(paste0(fig_path,"CARD_celltype_enhanced_A1.png"), p6, width=3000, height=3000, unit="px", dpi=300)
+
+ggsave(paste0(fig_path,"CARD_celltype_enhanced_10X.png"), p6, width=3000, height=3000, unit="px", dpi=300)
 
 ## Visualize the marker gene expression at an enhanced resolution 
 p7 <- CARD.visualize.gene(
@@ -200,9 +211,11 @@ p7 <- CARD.visualize.gene(
 	spatial_location    = location_imputation,
 	gene.visualize      = c("KRT7","IL12B", "KRT16", "KRT17","TP63","NAPSA"),
 	colors              = NULL,
-	NumCols             = 6
-    )
+	NumCols             = 3
+    ) + coord_flip() + scale_x_reverse()
 print(p7)
+
+ggsave(paste0(fig_path,"CARD_marker_enhanced_10X.png"), p7, width=4000, height=3000, unit="px", dpi=300)
 
 
 
