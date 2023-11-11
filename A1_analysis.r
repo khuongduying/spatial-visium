@@ -178,6 +178,7 @@ sce.enhanced <- spatialEnhance(sce, q=q, d=d, platform="Visium",
                                     verbose=TRUE, save.chain=TRUE,
                                     jitter_scale=3.5, jitter_prior=0.3)
 
+
 ## save sce.enhanced
 saveRDS(sce.enhanced, file = paste(rdata,"spatialA1_q13_enhanced.rds"), ascii=FALSE, version=NULL,
         compress=TRUE, refhook=NULL)
@@ -213,7 +214,19 @@ sce.enhanced <- enhanceFeatures(sce.enhanced, sce,
                                     feature_names=purrr::reduce(markers, c),
                                     nrounds=0)
 
+# enhance for top 50 SVGs
+top50_SVGs <- read_csv(paste(rdata,"top50_SVGs_A1.csv"))
+top50_SVGs <- top50_SVGs$g
 
+sce.enhanced <- enhanceFeatures(sce.enhanced, sce,
+                                    model="xgboost",
+                                    feature_names=top50_SVGs,
+                                    nrounds=0)
+
+saveRDS(sce.enhanced, file = paste(rdata,"spatialA1_q13_top50SVGs_enhanced.rds"), ascii=FALSE, version=NULL,
+      compress=TRUE, refhook=NULL)
+
+sce.enhanced <- readRDS(paste(rdata,"spatialA1_q13_top50SVGs_enhanced.rds"))                                 
 ## Aggregated the expression of marker genes within each cell type
 sum_counts <- function(SCE, features) { ##features are markers
     if (length(features) > 1) {
@@ -275,21 +288,21 @@ ggsave(paste(fig_path,"markers_HER_MET_enhanced.png"), p, width=3000, height=150
 
 ## Plot 1 gene
 ### Normal resolution
-gene_name = "KRT7"
+gene_name = "FGR"
 p<-featurePlot(sce, gene_name, color=NA) +
     viridis::scale_fill_viridis(option="C") +
     labs(title=gene_name, fill="Log-normalized\nexpression")
 p
-ggsave(paste(fig_path,"markers_KRT7_lowres.png"), p, width=3000, height=2400, unit="px", dpi=300)
+ggsave(paste(fig_path,"markers_FGR_lowres.png"), p, width=3000, height=2400, unit="px", dpi=300)
 
 
 ### Enhanced resolution
-gene_name = "KRT7"
+gene_name = "FGR"
 p<-featurePlot(sce.enhanced, gene_name, color=NA) +
     viridis::scale_fill_viridis(option="C") +
     labs(title=gene_name, fill="Log-normalized\nexpression")
 p
-ggsave(paste(fig_path,"markers_NKX2-1_hires.png"), p, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste(fig_path,"markers_FGR_hires.png"), p, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## SAVE DATA

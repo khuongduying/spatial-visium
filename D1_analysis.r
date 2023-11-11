@@ -257,6 +257,8 @@ write.csv(sample_lib_info,
 resid_expr <- regress_out(norm_expr, sample_info = sample_lib_info)
 resid_expr[1:5,1:5]
 
+saveRDS()
+
 # RUN SPATIALDE
 de_results <- spatialDE::run(resid_expr, 
                 coordinates=coords, 
