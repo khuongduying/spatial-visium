@@ -113,7 +113,7 @@ ggsave(
 ### select the cell type that we are interested
 ct.visualize = unique(sc_meta$cellType)
 ct.visualize = ct.visualize[is.na(ct.visualize)==FALSE]
-ct.visualize = c("tS2","tS1","Malignant cells","Myofibroblasts")
+ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
 
 ### visualize the spatial distribution of the cell type proportion
 p2 <- CARD.visualize.prop(
@@ -256,7 +256,10 @@ print(p9)
 scMapping = CARD_SCMapping(CARD_obj,shapeSpot="Square",numCell=7,ncore=10)
 print(scMapping)
 
+saveRDS(scMapping, file = paste0(rdata,"scMapping_10X.rds"), ascii = FALSE, version = NULL,
+        compress = TRUE, refhook = NULL)
 
+readRDS(paste0(rdata,"scMapping_10X.rds"))
 ### spatial location info and expression count of the single cell resolution data
 library(SingleCellExperiment)
 
@@ -290,11 +293,12 @@ p10 = ggplot(df, aes(x = x, y = y, colour = CT)) +
             legend.key = element_rect(colour = "transparent", fill = "white"),
             legend.key.size = unit(0.7, 'cm'),
             strip.text = element_text(size = 13,face="bold"))+
-                                guides(color=guide_legend(title="Cell Type"))
+                                guides(color=guide_legend(title="Cell Type")) +
+            coord_flip() + scale_x_reverse()
 print(p10)
 
 
-ggsave(paste0(fig_path,"CARD_celltype_sc_res_A1.png"), p10, width=3500, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype_sc_res_10X.png"), p10, width=4000, height=3000, unit="px", dpi=300)
 
 
 #############
