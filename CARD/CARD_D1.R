@@ -298,7 +298,7 @@ p10 = ggplot(df, aes(x = x, y = y, colour = CT)) +
 print(p10)
 
 
-ggsave(paste0(fig_path,"CARD_celltype_sc_res_10X.png"), p10, width=4000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype_sc_res_D1.png"), p10, width=4000, height=3000, unit="px", dpi=300)
 
 
 #############
