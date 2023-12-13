@@ -1,4 +1,4 @@
-dirname <- "/mnt/d4t/SPATIAL/GeneSmart/output/D1/test_output/HTI_spaceranger_count_D1/outs"
+#dirname <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/output/10X/Sample_spaceranger_count_10X/outs"
 
 readVisium_duy <- function(dirname) {
     spatial_dir <- file.path(dirname, "spatial")
