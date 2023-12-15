@@ -9,9 +9,9 @@ library(Matrix)
 
 
 # PATH
-REF_CELLTYPE    <- "/mnt/d4t/SPATIAL/GeneSmart/REF_CELLTYPE/"
-rdata           <- "/mnt/d4t/SPATIAL/GeneSmart/rdata/"
-fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/10X/"
+REF_CELLTYPE    <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/REF_CELLTYPE/"
+rdata           <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/rdata/"
+fig_path        <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/figures/10X/"
 
 
 # LOAD DATA
@@ -20,7 +20,7 @@ fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/10X/"
 SCE             <- readRDS(file=paste0(rdata," spatial10X_q15_ready.rds")) 
 
 ## SPATIAL COUNT
-spatial_count   <- logcounts(SCE)
+spatial_count   <- counts(SCE) ## must be raw count
 
 ## SPATIAL LOCATION
 spatial_location            <- colData(SCE)[c("row","col")]
@@ -29,12 +29,19 @@ colnames(spatial_location)  <- c("x","y") ## transform to correct format
 spatial_location            <- data.frame(spatial_location)
 #spatial_location$x <- rev(spatial_location$x)
 
+
+## SINGLE-CELL REF
+### load reference database
+sc_ref <- readRDS(paste0(REF_CELLTYPE, "refquery_final.rds"))
+
 ## SINGLE-CELL REF COUNT
+
 ### load data
-sc_count            <- data.frame(read_csv(file=paste0(REF_CELLTYPE,"matrix_tumor.csv")))
+sc_count            <- sc_ref[["nCount_RNA"]] ## raw count
 ### transformation
-rownames(sc_count)  <- sc_count[,1]
-sc_count            <- sc_count[,-1]
+#rownames(sc_count)  <- sc_count[,1]
+#sc_count            <- sc_count[,-1]
+
 ### transform to a sparse matrix
 sc_count            <- as(sc_count, "sparseMatrix")
 sc_count            <- Matrix(data=sc_count, sparse=TRUE)
