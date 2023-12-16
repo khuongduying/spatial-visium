@@ -9,18 +9,18 @@ library(Matrix)
 
 
 # PATH
-REF_CELLTYPE    <- "/mnt/d4t/SPATIAL/GeneSmart/REF_CELLTYPE/"
-rdata           <- "/mnt/d4t/SPATIAL/GeneSmart/rdata/"
-fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/A1/"
+REF_CELLTYPE    <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/REF_CELLTYPE/"
+rdata           <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/rdata/A1/"
+fig_path        <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/figures/A1/"
 
 
 # LOAD DATA
 
 ## SPATIAL DATA
-SCE             <- readRDS(file=paste0(rdata," spatialA1_q6_ready.rds")) 
+SCE             <- readRDS(file=paste0(rdata," spatialA1_q13_ready.rds")) 
 
 ## SPATIAL COUNT
-spatial_count   <- logcounts(SCE)
+spatial_count   <- counts(SCE) ## must be raw count
 
 ## SPATIAL LOCATION
 spatial_location            <- colData(SCE)[c("row","col")]
@@ -29,32 +29,30 @@ colnames(spatial_location)  <- c("x","y") ## transform to correct format
 spatial_location            <- data.frame(spatial_location)
 #spatial_location$x <- rev(spatial_location$x)
 
+
+## SINGLE-CELL REF
+
 ## SINGLE-CELL REF COUNT
+
 ### load data
-sc_count            <- data.frame(read_csv(file=paste0(REF_CELLTYPE,"matrix_tumor.csv")))
+sc_count            <- readRDS(paste0(REF_CELLTYPE, "RNA_rawcounts_matrix.rds")) ## raw count
+
 ### transformation
-rownames(sc_count)  <- sc_count[,1]
-sc_count            <- sc_count[,-1]
 ### transform to a sparse matrix
 sc_count            <- as(sc_count, "sparseMatrix")
 sc_count            <- Matrix(data=sc_count, sparse=TRUE)
 
-
 ## SINGLE-CELL REF CELLTYPE ANNOTATED
-### load data
-sc_meta             <- read_csv(file=paste0(REF_CELLTYPE,"GSE131907_Lung_Cancer_cell_annotation.csv"))
+### load reference database
+sc_meta <- readRDS(paste0(REF_CELLTYPE, "refquery_final.rds"))
+
+### View data
+head(sc_meta[[]])
 
 ### Transformation
-sc_meta             <- data.frame(sc_meta[c("Index","Cell_subtype")])
-rownames(sc_meta)   <- sc_meta$Index
-sc_meta$sampleInfo  <- c("sample1")
-colnames(sc_meta)   <- c("cellID","cellType","sampleInfo")
-
-### Subset only LUNG TUMOR samples
-tumor_pattern       <- c("LUNG_T", "EBUS_06", "EBUS_28", "EBUS_49", "BRONCHO_58")
-sc_meta             <- sc_meta[grepl(paste(tumor_pattern, collapse="|"), rownames(sc_meta)),]
-sc_meta             <- sc_meta[order(rownames(sc_meta), decreasing = FALSE),]
-
+sc_meta[[]]["cellID"] <- rownames(sc_meta[[]])
+sc_meta <- sc_meta[[]][c("cellID","predicted.celltypel1","Patient")]
+colnames(sc_meta) <- c("cellID","cellType", "sampleInfo")
 
 # CREATE AN CARD OBJECT
 CARD_obj = createCARDObject(
@@ -96,7 +94,7 @@ p1 <- CARD.visualize.pie(
 	spatial_location    = CARD_obj@spatial_location, 
     colors              = colors, 
     radius              = 0.4 ### You can choose radius = NULL or your own radius number
-    )
+    ) + coord_flip() + scale_x_reverse()
 print(p1)
 
 ### save figure
@@ -113,40 +111,43 @@ ggsave(
 ### select the cell type that we are interested
 ct.visualize = unique(sc_meta$cellType)
 ct.visualize = ct.visualize[is.na(ct.visualize)==FALSE]
-ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
-
+#ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
+ct.visualize1 = ct.visualize[1:9]
+ct.visualize2 = ct.visualize[10:18]
+ct.visualize3 = ct.visualize[19:27]
 ### visualize the spatial distribution of the cell type proportion
 p2 <- CARD.visualize.prop(
                 proportion         = CARD_obj@Proportion_CARD,        
                 spatial_location   = CARD_obj@spatial_location, 
                 ct.visualize       = ct.visualize,                 ### selected cell types to visualize
-                colors             = c("lightblue","lightpink","red"), ### if not provide, we will use the default colors
-                NumCols            = 2,                                 ### number of columns in the figure panel
-                pointSize          = 1.0
-                ) + 
-                scale_x_reverse()
-                                             ### point size in ggplot2 scatterplot  
+                colors             = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
+                NumCols            = 3,                                 ### number of columns in the figure panel
+                pointSize          = 1.1
+                ) +
+                coord_flip() +
+                scale_x_reverse()                             ### point size in ggplot2 scatterplot  
 print(p2)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_celltype_A1.png"), p2, width=3500, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype9_A1_1.png"), p2, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE PROPORTION FOR TWO CELL TYPES
 
 ### visualize the spatial distribution of two cell types on the same plot
+ct2.visualize <- c("Cancer cells","T cells")
 p3 <- CARD.visualize.prop.2CT(
     proportion          = CARD_obj@Proportion_CARD,                             ### Cell type proportion estimated by CARD
     spatial_location    = CARD_obj@spatial_location,                      ### spatial location information
-    ct2.visualize       = c("tS2","tS1"),              ### two cell types you want to visualize
+    ct2.visualize       = ct2.visualize,              ### two cell types you want to visualize
     colors              = list(
                             c("lightblue","lightyellow","red"),
                             c("lightblue","lightyellow","black"))
-    )                                   
+    ) + coord_flip() + scale_x_reverse()  + scale_size_manual(20)                   
 print(p3)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_2celltype_A1.png"), p3, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_2celltype9_Cancer_w_Tcells_A1.png"), p3, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE CELL TYPE PROPORTION CORRELATION
@@ -157,13 +158,13 @@ p4 <- CARD.visualize.Cor(
 print(p4)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_correlation_A1.png"), p4, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_correlation9_A1.png"), p4, width=3000, height=3000, unit="px", dpi=300)
 
 
 # REFINED SPATIAL MAP
 
 ## IPUTATION ON THE NEWLY GRIDED SPATIAL LOCATIONS
-CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 10,exclude = NULL)
+CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 20,exclude = NULL)
 
 
 ## Visualize the newly grided spatial locations to see if the shape is correctly detected. If not, the user can provide the row names of the excluded spatial location data into the CARD.imputation function
@@ -187,16 +188,23 @@ p5 <- ggplot(
 print(p5)
 
 ## Visualize the cell type proportion at an enhanced resolution
+ct.visualize = ct.visualize
+
 p6 <- CARD.visualize.prop(
 	proportion          = CARD_obj@refined_prop,                         
 	spatial_location    = location_imputation,            
 	ct.visualize        = ct.visualize,                    
-	colors              = c("lightblue","lightyellow","red"),    
-	NumCols             = 2,
-	pointSize           = 2
-    ) + scale_x_reverse()                                  
+	colors              = NULL,    
+	NumCols             = 3,
+	pointSize           = 1.4
+    ) +  
+    theme_bw() + 
+    coord_flip() + 
+    scale_x_reverse()
+                                    
 print(p6)
-ggsave(paste0(fig_path,"CARD_celltype_enhanced_A1.png"), p6, width=3000, height=3000, unit="px", dpi=300)
+
+ggsave(paste0(fig_path,"CARD_celltype9_enhanced_A1_3.png"), p6, width=3000, height=3000, unit="px", dpi=300)
 
 ## Visualize the marker gene expression at an enhanced resolution 
 p7 <- CARD.visualize.gene(
@@ -204,9 +212,11 @@ p7 <- CARD.visualize.gene(
 	spatial_location    = location_imputation,
 	gene.visualize      = c("KRT7","IL12B", "KRT16", "KRT17","TP63","NAPSA"),
 	colors              = NULL,
-	NumCols             = 6
-    ) + scale_x_reverse()
+	NumCols             = 3
+    ) + coord_flip() + scale_x_reverse()
 print(p7)
+
+ggsave(paste0(fig_path,"CARD_marker_enhanced_A1.png"), p7, width=4000, height=3000, unit="px", dpi=300)
 
 
 
@@ -244,12 +254,13 @@ print(p9)
 ####' Note that here the shapeSpot is the user defined variable 
 ####' which indicates the capturing area of single cells. 
 ####' Details see above.
-scMapping = CARD_SCMapping(CARD_obj,shapeSpot="Square",numCell=7,ncore=10)
+scMapping = CARD_SCMapping(CARD_obj,shapeSpot="Square",numCell=7,ncore=40)
 print(scMapping)
 
-saveRDS(scMapping, file = paste0(rdata,"scMapping_A1.rds"), ascii = FALSE, version = NULL,
+saveRDS(scMapping, file = paste0(rdata,"scMapping_9celltypes_A1.rds"), ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
+readRDS(paste0(rdata,"scMapping_9_celltypes_A1.rds"))
 ### spatial location info and expression count of the single cell resolution data
 library(SingleCellExperiment)
 
@@ -284,11 +295,11 @@ p10 = ggplot(df, aes(x = x, y = y, colour = CT)) +
             legend.key.size = unit(0.7, 'cm'),
             strip.text = element_text(size = 13,face="bold"))+
                                 guides(color=guide_legend(title="Cell Type")) +
-                                scale_x_reverse()
+            coord_flip() + scale_x_reverse()
 print(p10)
 
 
-ggsave(paste0(fig_path,"CARD_celltype_sc_res_A1.png"), p10, width=4000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype9_sc_res_A1_1.png"), p10, width=4000, height=3000, unit="px", dpi=300)
 
 
 #############
