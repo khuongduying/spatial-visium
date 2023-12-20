@@ -9,9 +9,9 @@ library(Matrix)
 
 
 # PATH
-REF_CELLTYPE    <- "/mnt/d4t/SPATIAL/GeneSmart/REF_CELLTYPE/"
-rdata           <- "/mnt/d4t/SPATIAL/GeneSmart/rdata/"
-fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/D1/"
+REF_CELLTYPE    <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/REF_CELLTYPE/"
+rdata           <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/rdata/D1/"
+fig_path        <- "/mnt/rdisk/duydao/SPATIAL/GeneSmart/figures/D1/"
 
 
 # LOAD DATA
@@ -20,7 +20,7 @@ fig_path        <- "/mnt/d4t/SPATIAL/GeneSmart/figures/D1/"
 SCE             <- readRDS(file=paste0(rdata," spatialD1_ready.rds")) 
 
 ## SPATIAL COUNT
-spatial_count   <- logcounts(SCE)
+spatial_count   <- counts(SCE) ## must be raw count
 
 ## SPATIAL LOCATION
 spatial_location            <- colData(SCE)[c("row","col")]
@@ -29,32 +29,29 @@ colnames(spatial_location)  <- c("x","y") ## transform to correct format
 spatial_location            <- data.frame(spatial_location)
 #spatial_location$x <- rev(spatial_location$x)
 
+
+## SINGLE-CELL REF
 ## SINGLE-CELL REF COUNT
+
 ### load data
-sc_count            <- data.frame(read_csv(file=paste0(REF_CELLTYPE,"matrix_tumor.csv")))
+sc_count            <- readRDS(paste0(REF_CELLTYPE, "RNA_rawcounts_matrix.rds")) ## raw count
+
 ### transformation
-rownames(sc_count)  <- sc_count[,1]
-sc_count            <- sc_count[,-1]
 ### transform to a sparse matrix
 sc_count            <- as(sc_count, "sparseMatrix")
 sc_count            <- Matrix(data=sc_count, sparse=TRUE)
 
-
 ## SINGLE-CELL REF CELLTYPE ANNOTATED
-### load data
-sc_meta             <- read_csv(file=paste0(REF_CELLTYPE,"GSE131907_Lung_Cancer_cell_annotation.csv"))
+### load reference database
+sc_meta <- readRDS(paste0(REF_CELLTYPE, "refquery_final.rds"))
+
+### View data
+head(sc_meta[[]])
 
 ### Transformation
-sc_meta             <- data.frame(sc_meta[c("Index","Cell_subtype")])
-rownames(sc_meta)   <- sc_meta$Index
-sc_meta$sampleInfo  <- c("sample1")
-colnames(sc_meta)   <- c("cellID","cellType","sampleInfo")
-
-### Subset only LUNG TUMOR samples
-tumor_pattern       <- c("LUNG_T", "EBUS_06", "EBUS_28", "EBUS_49", "BRONCHO_58")
-sc_meta             <- sc_meta[grepl(paste(tumor_pattern, collapse="|"), rownames(sc_meta)),]
-sc_meta             <- sc_meta[order(rownames(sc_meta), decreasing = FALSE),]
-
+sc_meta[[]]["cellID"] <- rownames(sc_meta[[]])
+sc_meta <- sc_meta[[]][c("cellID","predicted.celltypel2","Patient")]
+colnames(sc_meta) <- c("cellID","cellType", "sampleInfo")
 
 # CREATE AN CARD OBJECT
 CARD_obj = createCARDObject(
@@ -80,28 +77,20 @@ print(CARD_obj@Proportion_CARD[1:2,])
 ## VISUALIZE THE PROPORTION OF EACH CELL TYPE
 
 ### set the colors 
-colors = c("#FFD92F","#4DAF4A","#FCCDE5","#D9D9D9","#377EB8","#7FC97F","#BEAED4",
-    "#FDC086","#FFFF99","#386CB0","#F0027F","#BF5B17","#666666","#1B9E77","#D95F02",
-    "#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D",
-    "#FFD92F","#4DAF4A","#FCCDE5","#D9D9D9","#377EB8","#7FC97F","#BEAED4",
-    "#FDC086","#FFFF99","#386CB0","#F0027F","#BF5B17","#666666","#1B9E77","#D95F02",
-    "#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D",
-    "#FFD92F","#4DAF4A","#FCCDE5","#D9D9D9","#377EB8","#7FC97F","#BEAED4",
-    "#FDC086","#FFFF99","#386CB0","#F0027F","#BF5B17","#666666","#1B9E77","#D95F02",
-    "#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D")
+random_colors <- replicate(27, paste0("#", sprintf("%06x", sample(0:16777215, 1))))
 
 ### visualize
 p1 <- CARD.visualize.pie(
 	proportion          = CARD_obj@Proportion_CARD,
 	spatial_location    = CARD_obj@spatial_location, 
-    colors              = colors, 
+    colors              = random_colors, 
     radius              = 0.4 ### You can choose radius = NULL or your own radius number
     ) + coord_flip() + scale_x_reverse()
 print(p1)
 
 ### save figure
 ggsave(
-    paste0(fig_path,"CARD_proportion_A1.png"), 
+    paste0(fig_path,"CARD_proportion_D1.png"), 
     p1, 
     width   = 3000, 
     height  = 3000, 
@@ -113,32 +102,35 @@ ggsave(
 ### select the cell type that we are interested
 ct.visualize = unique(sc_meta$cellType)
 ct.visualize = ct.visualize[is.na(ct.visualize)==FALSE]
-ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
-
+#ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
+ct.visualize1 = ct.visualize[1:9]
+ct.visualize2 = ct.visualize[10:18]
+ct.visualize3 = ct.visualize[19:27]
 ### visualize the spatial distribution of the cell type proportion
 p2 <- CARD.visualize.prop(
                 proportion         = CARD_obj@Proportion_CARD,        
                 spatial_location   = CARD_obj@spatial_location, 
-                ct.visualize       = ct.visualize,                 ### selected cell types to visualize
+                ct.visualize       = ct.visualize3,                 ### selected cell types to visualize
                 colors             = c("lightblue","lightyellow","red"), ### if not provide, we will use the default colors
-                NumCols            = 2,                                 ### number of columns in the figure panel
-                pointSize          = 2.0
+                NumCols            = 3,                                 ### number of columns in the figure panel
+                pointSize          = 1.1
                 ) +
                 coord_flip() +
                 scale_x_reverse()                             ### point size in ggplot2 scatterplot  
 print(p2)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_celltype_D1.png"), p2, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype27_D1_3.png"), p2, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE PROPORTION FOR TWO CELL TYPES
 
 ### visualize the spatial distribution of two cell types on the same plot
+ct2.visualize <- c("CD8+ Effector memory T cells","CXCL1 Cancer cells")
 p3 <- CARD.visualize.prop.2CT(
     proportion          = CARD_obj@Proportion_CARD,                             ### Cell type proportion estimated by CARD
     spatial_location    = CARD_obj@spatial_location,                      ### spatial location information
-    ct2.visualize       = c("Malignant cells","tS2"),              ### two cell types you want to visualize
+    ct2.visualize       = ct2.visualize,              ### two cell types you want to visualize
     colors              = list(
                             c("lightblue","lightyellow","red"),
                             c("lightblue","lightyellow","black"))
@@ -146,7 +138,7 @@ p3 <- CARD.visualize.prop.2CT(
 print(p3)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_2celltype_D1.png"), p3, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_2celltype27_Cancer_w_TCD8_D1.png"), p3, width=3000, height=3000, unit="px", dpi=300)
 
 
 ## VISUALIZE THE CELL TYPE PROPORTION CORRELATION
@@ -157,13 +149,13 @@ p4 <- CARD.visualize.Cor(
 print(p4)
 
 ### save fig
-ggsave(paste0(fig_path,"CARD_correlation_D1.png"), p4, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_correlation27_D1.png"), p4, width=3000, height=3000, unit="px", dpi=300)
 
 
 # REFINED SPATIAL MAP
 
 ## IPUTATION ON THE NEWLY GRIDED SPATIAL LOCATIONS
-CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 20,exclude = NULL)
+CARD_obj = CARD.imputation(CARD_obj,NumGrids = 2000,ineibor = 10,exclude = NULL)
 
 
 ## Visualize the newly grided spatial locations to see if the shape is correctly detected. If not, the user can provide the row names of the excluded spatial location data into the CARD.imputation function
@@ -187,15 +179,15 @@ p5 <- ggplot(
 print(p5)
 
 ## Visualize the cell type proportion at an enhanced resolution
-ct.visualize = c("Exhausted CD8+ T","Tumor ECs","Malignant cells","mo-Mac")
+ct.visualize = ct.visualize
 
 p6 <- CARD.visualize.prop(
 	proportion          = CARD_obj@refined_prop,                         
 	spatial_location    = location_imputation,            
-	ct.visualize        = ct.visualize,                    
+	ct.visualize        = ct.visualize1,                    
 	colors              = NULL,    
-	NumCols             = 2,
-	pointSize           = 3.0
+	NumCols             = 3,
+	pointSize           = 1.4
     ) +  
     theme_bw() + 
     coord_flip() + 
@@ -203,7 +195,7 @@ p6 <- CARD.visualize.prop(
                                     
 print(p6)
 
-ggsave(paste0(fig_path,"CARD_celltype_enhanced_D1.png"), p6, width=3000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype27_enhanced_D1.png"), p6, width=3000, height=3000, unit="px", dpi=300)
 
 ## Visualize the marker gene expression at an enhanced resolution 
 p7 <- CARD.visualize.gene(
@@ -218,48 +210,18 @@ print(p7)
 ggsave(paste0(fig_path,"CARD_marker_enhanced_D1.png"), p7, width=4000, height=3000, unit="px", dpi=300)
 
 
-
-# EXTENSION OF CARD IN A REFERENCE-FREE VERSION: CARDFREE
-
-## CREATE AN CARDFREE OBJECT
-### load the marker gene list
-CARDfree_obj = createCARDfreeObject(
-	markerList          = markerList,
-	spatial_count       = spatial_count,
-	spatial_location    = spatial_location,
-	minCountGene        = 100,
-	minCountSpot        = 5
-    ) 
-
-## DECONVOLUTION USING CARDFREE
-### deconvolution using CARDfree
-CARDfree_obj = CARD_refFree(CARDfree_obj)
-
-
-## VISUALIZATION OF THE RESULT OF CARDFREE
-colors = c("#FFD92F","#4DAF4A","#FCCDE5","#D9D9D9","#377EB8","#7FC97F","#BEAED4","#FDC086","#FFFF99","#386CB0","#F0027F","#BF5B17","#666666","#1B9E77","#D95F02","#7570B3","#E7298A","#66A61E","#E6AB02","#A6761D")
-### In order to maximumply match with the original results of CARD, we order the colors to generally match with the results infered by CARD
-CARDfree_obj@Proportion_CARD = CARDfree_obj@Proportion_CARD[,c(8,10,14,2,1,6,12,18,7,13,20,19,16,17,11,15,4,9,3,5)]
-colnames(CARDfree_obj@Proportion_CARD) = paste0("CT",1:20)
-p9 <- CARD.visualize.pie(
-    CARDfree_obj@Proportion_CARD,CARDfree_obj@spatial_location,
-    colors = colors
-    )
-print(p9)
-
-
 # EXTENSION OF CARD FOR SINGLE CELL RESOLUTION MAPPING
 
 ####' Note that here the shapeSpot is the user defined variable 
 ####' which indicates the capturing area of single cells. 
 ####' Details see above.
-scMapping = CARD_SCMapping(CARD_obj,shapeSpot="Square",numCell=7,ncore=10)
+scMapping = CARD_SCMapping(CARD_obj,shapeSpot="Square",numCell=7,ncore=40)
 print(scMapping)
 
-saveRDS(scMapping, file = paste0(rdata,"scMapping_D1.rds"), ascii = FALSE, version = NULL,
+saveRDS(scMapping, file = paste0(rdata,"scMapping_27celltypes_D1.rds"), ascii = FALSE, version = NULL,
         compress = TRUE, refhook = NULL)
 
-readRDS(paste0(rdata,"scMapping_D1.rds"))
+readRDS(paste0(rdata,"scMapping_27_celltypes_D1.rds"))
 ### spatial location info and expression count of the single cell resolution data
 library(SingleCellExperiment)
 
@@ -269,14 +231,14 @@ count_SC        = assays(scMapping)$counts
 
 library(ggplot2)
 df      = MapCellCords
-colors  = c("#ed3e24","#C59CC5","#C09CBF","#C2D567","#C9DAC3","#E1EBA0",
+colors  = c("#ed3e24","#C59CC5","blue","#C2D567","#C9DAC3","#E1EBA0",
 	"#FFED6F","#CDD796","#F8CDDE","#8DD3C7","#CFECBB","#F4F4B9","#CFCCCF","#D1A7B9","#E9D3DE","#F4867C","#C0979F",
 	"#D5CFD6","#86B1CD","#CEB28B")
 
 random_colors <- replicate(43, paste0("#", sprintf("%06x", sample(0:16777215, 1))))
 
 p10 = ggplot(df, aes(x = x, y = y, colour = CT)) + 
-        geom_point(size = 1.5) +
+        geom_point(size = 1) +
         scale_colour_manual(values =  random_colors) +
         #coord_flip() +
         #facet_wrap(~Method,ncol = 2,nrow = 3) + 
@@ -298,7 +260,7 @@ p10 = ggplot(df, aes(x = x, y = y, colour = CT)) +
 print(p10)
 
 
-ggsave(paste0(fig_path,"CARD_celltype_sc_res_D1.png"), p10, width=4000, height=3000, unit="px", dpi=300)
+ggsave(paste0(fig_path,"CARD_celltype27_sc_res_D1_1.png"), p10, width=4000, height=3000, unit="px", dpi=300)
 
 
 #############
