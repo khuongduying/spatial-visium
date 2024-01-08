@@ -2,8 +2,16 @@ This repo contains the code for 10X Visium Spatial Transcriptomics Analysis.
 
 ## Space Ranger Report
 
+## Resolution Enhancing using BayeSpace
+![DEGs Between Clusters](assets/resolution_enhancement.svg "DEGs Between Clusters")
+
 ## Marker Visualizations
 
-![Tumor Markers](/mnt/rdisk/duydao/SPATIAL/GeneSmart/scripts/assets/markers_tumor.png "Tumor Markers")
+![Tumor Markers](assets/markers_tumor.png "Tumor Markers")
 
-rsync -avPS -e 'ssh -p 12669' markers_tumor.png duydao@0.tcp.ap.ngrok.io:/mnt/rdisk/duydao/SPATIAL/GeneSmart/scripts/assets/
+## Clustering
+
+
+## Differential Expression Between Clusters
+
+![DEGs Between Clusters](assets/VISIUM_A1.svg "DEGs Between Clusters")
