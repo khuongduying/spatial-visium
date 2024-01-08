@@ -7,10 +7,10 @@ This repo contains the code for 10X Visium Spatial Transcriptomics Analysis.
 
 ## Marker Visualizations
 
-![Tumor Markers](assets/markers_tumor.png "Tumor Markers")
+![Tumor Markers](assets/markers_tumor_enhanced.png "Tumor Markers")
 
-## Clustering
-![Clusters](assets/cluster_10X_enhanced_q15_i50K.png "Clusters")
+## Spatial-aware Clustering
+![Clusters](assets/A1_13clusters.svg "Clusters")
 
 ## Differential Expression Between Clusters
 
@@ -18,9 +18,22 @@ This repo contains the code for 10X Visium Spatial Transcriptomics Analysis.
 
 ## Cell-type Deconvolution
 
-## Cell-type Annotation Based on Marker Genes
+### Cell-type Deconvolution Based on Marker Genes
+![Cell-type Markers](assets/CARD_celltype9_A1_1.png "Cell-type markers")
 
-## Cell-type Annotation Based on Single-cell Database
+### Cell-type Deconvolution Based on Single-cell Database
+![Single-cell Resolution](assets/CARD_celltype27_sc_res_A1_1.png "Single-cell Resolution")
+
+### Identify Tumor-immune Interface
+![Tumor-immune](assets/interface.png "Tumor-immune Interface")
 
 ## Cell-Cell Colocalization and Ligand-Receptor Interaction
+### Colocalization
+![Colocalization](assets/colocalization.png "colocalization")
+
+### Ligand-Receptor Network
+![LR Network](assets/LRNetwork.png "LRNetwork")
+
+### Ligand-Receptor Interaction
+![LR Interaction](assets/interaction_colocalized_pDC_Endothelial.png "LR Interaction")
 
